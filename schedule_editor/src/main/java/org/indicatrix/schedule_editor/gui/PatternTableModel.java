@@ -77,7 +77,7 @@ public class PatternTableModel extends AbstractTableModel {
             
             int seconds = diff % 60;
             diff -= seconds;
-            return String.format("%d:%02d", diff / 60, seconds);
+            return String.format("<html><i><small>%d:%02d</small></i></html>", diff / 60, seconds);
         }
     }
     
