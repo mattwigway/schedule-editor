@@ -21,6 +21,8 @@ package org.indicatrix.schedule_editor.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.onebusaway.gtfs.model.Stop;
@@ -38,9 +40,27 @@ import lombok.Getter;
 public class Pattern {
     @Getter private List<Stop> stops;
     @Getter private List<Trip> trips;
+    private GtfsRelationalDao dao;
     
     // Cannot instantiate directly
     private Pattern () {}
+    
+    /**
+     * Sort trips by start time
+     */
+    private void sortTrips () {
+        class TripStartComparator implements Comparator<Trip> {
+            public int compare(Trip trip1, Trip trip2) {
+                int st1 = dao.getStopTimesForTrip(trip1).get(0).getDepartureTime();
+                int st2 = dao.getStopTimesForTrip(trip2).get(0).getDepartureTime();
+                if (st1 > st2) return 1;
+                else if (st1 == st2) return 0;
+                else return -1;
+            }
+        }
+        
+        Collections.sort(trips, new TripStartComparator());
+    }
     
     /**
      * Return a human-readable description.
@@ -86,7 +106,13 @@ public class Pattern {
             pattern.stops = stops;
             pattern.trips = new ArrayList<Trip>();
             pattern.trips.add(trip);
+            pattern.dao = dao;
             patterns.add(pattern);
+        }
+        
+        // sort the trips so that they appear in order in the viewer
+        for (Pattern pattern : patterns) {
+            pattern.sortTrips();
         }
         
         return patterns;
