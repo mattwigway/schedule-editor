@@ -19,22 +19,63 @@
 
 package org.indicatrix.schedule_editor.gui;
 
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.io.File;
+import java.io.IOException;
+
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
+import javax.swing.KeyStroke;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 
-public class MainWindow {    
+import org.indicatrix.schedule_editor.model.DataManager;
+import org.indicatrix.schedule_editor.model.Pattern;
+import org.onebusaway.gtfs.model.Route;
+import org.onebusaway.gtfs.services.GtfsMutableRelationalDao;
+
+public class MainWindow {
+    /** The schedule data manager used by all of the manipulations */
+    private static DataManager dataManager;
+    private static JFrame window;
+    private static DefaultTreeModel tree;
+    
+    private static MutableTreeNode routesNode;
+    
     private static void showWindow() {
-        JFrame window = new JFrame("Schedule Editor");
+        window = new JFrame("Schedule Editor");
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        // Set up the layout
+        // Set up the menu
+        JMenuBar menuBar = new JMenuBar();
         
+        JMenu fileMenu = new JMenu("File");
+        fileMenu.setMnemonic(KeyEvent.VK_F);
+        fileMenu.getAccessibleContext()
+            .setAccessibleDescription("Opening, saving, importing and exporting schedule data");
+        menuBar.add(fileMenu);
+        
+        JMenuItem importGtfsMenu = new JMenuItem("Import GTFS", KeyEvent.VK_I);
+        importGtfsMenu.setAccelerator(
+                KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.CTRL_MASK));
+        importGtfsMenu.addActionListener(new ImportGtfsAction());
+        fileMenu.add(importGtfsMenu);
+        
+        window.setJMenuBar(menuBar);
+        
+        // set up the layout
         JPanel treeArea = new JPanel();
         JPanel contentArea = new JPanel();
         
@@ -49,22 +90,68 @@ public class MainWindow {
         
         // now that layout is set, add the tree
         MutableTreeNode agencyNode = new DefaultMutableTreeNode("Agency");
-        MutableTreeNode routesNode = new DefaultMutableTreeNode("Routes");
+        routesNode = new DefaultMutableTreeNode("Routes"); 
         MutableTreeNode stopsNode = new DefaultMutableTreeNode("Stops");
         MutableTreeNode calendarNode = new DefaultMutableTreeNode("Calendar");
         MutableTreeNode feedInfoNode = new DefaultMutableTreeNode("Feed Info");
         
-        JTree tree = new JTree(new TreeNode[] {
-            agencyNode,
-            routesNode,
-            stopsNode,
-            calendarNode,
-            feedInfoNode
-        });
-        treeArea.add(tree);
+        MutableTreeNode rootNode = new DefaultMutableTreeNode("Schedule Editor");
+        tree = new DefaultTreeModel(rootNode);
+        tree.insertNodeInto(agencyNode, rootNode, 0);
+        tree.insertNodeInto(routesNode, rootNode, 1);
+        tree.insertNodeInto(stopsNode, rootNode, 2);
+        tree.insertNodeInto(calendarNode, rootNode, 3);
+        tree.insertNodeInto(feedInfoNode, rootNode, 4);
+        
+        JTree treeView = new JTree(tree);   
+        treeArea.add(treeView);
         
         window.pack();
         window.setVisible(true);
+    }
+    
+    // actions
+    /** Handle a GTFS import */
+    private static class ImportGtfsAction implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            JFileChooser fc = new JFileChooser();
+            int ret = fc.showOpenDialog(window);
+            if (ret == JFileChooser.APPROVE_OPTION) {
+                File file = fc.getSelectedFile();
+                
+                // TODO: save changes to existing project?
+                // create a new Data Manager for a new GTFS feed
+                dataManager = new DataManager();
+                
+                if (file == null) return;
+                
+                try {
+                    dataManager.loadGtfs(file);
+                } catch (IllegalAccessException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                } catch (IOException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+                
+                // populate the tree
+                GtfsMutableRelationalDao dao = dataManager.getDao();
+                
+                MutableTreeNode parentNode;
+                MutableTreeNode childNode;
+                
+                for (Route route : dao.getAllRoutes()) {
+                    parentNode = new DefaultMutableTreeNode(new DisplayRoute(route));
+                    tree.insertNodeInto(parentNode, routesNode, routesNode.getChildCount());
+                    
+                    for (Pattern pattern : dataManager.getPatternsForRoute(route)) {
+                        childNode = new DefaultMutableTreeNode(pattern);
+                        tree.insertNodeInto(childNode, parentNode, parentNode.getChildCount());
+                    }
+                }
+            }
+        }
     }
     
     public static void main (String[] args) {

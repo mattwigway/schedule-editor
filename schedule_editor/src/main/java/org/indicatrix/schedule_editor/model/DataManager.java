@@ -28,6 +28,8 @@ import org.onebusaway.gtfs.impl.GtfsRelationalDaoImpl;
 import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.serialization.GtfsReader;
 import org.onebusaway.gtfs.services.GtfsMutableRelationalDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import lombok.Getter;
 
@@ -36,6 +38,8 @@ import lombok.Getter;
  * @author mattwigway
  */
 public class DataManager {
+    private static Logger _log = LoggerFactory.getLogger(DataManager.class);
+    
     @Getter
     private GtfsMutableRelationalDao dao;
     private HashMap<Route, List<Pattern>> patterns;    
@@ -44,17 +48,27 @@ public class DataManager {
         dao = null;
     }
     
-    public void loadGtfs (File path) throws IllegalAccessException, IOException {
-        if (dao != null)
+    /** Get the patterns for the given route */
+    public List<Pattern> getPatternsForRoute (Route route) {
+        return patterns.get(route);
+    }
+    
+    public void loadGtfs (File path) throws IllegalAccessException, IOException {       
+        if (dao != null) {
+            _log.error("DataManager re-use attempted");
             throw new IllegalAccessException("DataManagers can only be used once");
+        }
         
+        _log.debug("Reading GTFS");
         dao = new GtfsRelationalDaoImpl();
         GtfsReader reader = new GtfsReader();
         reader.setInputLocation(path);
         reader.setEntityStore(dao);
         reader.run();
         
+        _log.debug("Building patterns for routes");
         buildPatternsForAllRoutes();
+        _log.debug("GTFS loaded");
     }
     
     /**

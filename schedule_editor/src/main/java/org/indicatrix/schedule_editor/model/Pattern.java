@@ -43,6 +43,21 @@ public class Pattern {
     private Pattern () {}
     
     /**
+     * Return a human-readable description.
+     */
+    public String toString() {
+        if (stops == null || trips == null || stops.size() == 0 || trips.size() == 0)
+            // PANIC CAN'T HAPPEN
+            return "Empty pattern";
+        
+        return "<html>" + 
+               stops.get(0).getName() + " to " + stops.get(stops.size() - 1).getName() + "<br>" +
+               "Direction " + trips.get(0).getDirectionId() + "<br>" +
+               stops.size() + " stops, " + trips.size() + " trips" +
+               "</html>";
+    }
+    
+    /**
      * Build patterns for a bunch of trips.
      */
     public static List<Pattern> buildPatternsForTrips(GtfsRelationalDao dao, Collection<Trip> trips) {
@@ -59,7 +74,7 @@ public class Pattern {
             for (Pattern pattern : patterns) {
                 if (stops.equals(pattern.stops)) {
                     pattern.trips.add(trip);
-                    break TRIPS;
+                    continue TRIPS;
                 }
             }
             
