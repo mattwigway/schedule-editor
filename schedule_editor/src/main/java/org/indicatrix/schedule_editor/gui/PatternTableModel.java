@@ -25,7 +25,8 @@ public class PatternTableModel extends AbstractTableModel {
     }
     
     public int getColumnCount() {
-        return pattern.getStops().size();
+        // + 1 for trip ID
+        return pattern.getStops().size() + 1;
     }
 
     public int getRowCount() {
@@ -34,7 +35,20 @@ public class PatternTableModel extends AbstractTableModel {
     }
 
     public Object getValueAt(int row, int col) {
+        if (col == 0) {
+            if (row == 0)
+                return "Trip ID";
+            
+            if (row % 2 == 1)
+                return pattern.getTrips().get((row - 1) / 2).getId();
+            else return "";
+        }
+        
+        // avoid many - 1's later on.
+        col -= 1;
+        
         if (row == 0) {
+            
             // we need to get the heading for this column, i.e. the stop name + ID
             Stop stop = pattern.getStops().get(col);
             return "<html>" + stop.getName() + "<br>(" + stop.getId().toString() + ")</html>";
