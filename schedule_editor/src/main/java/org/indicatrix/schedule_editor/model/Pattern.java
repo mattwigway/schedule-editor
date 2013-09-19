@@ -50,10 +50,13 @@ public class Pattern {
             // PANIC CAN'T HAPPEN
             return "Empty pattern";
         
+        // Using HTML code in a toString is perhaps a bit unorthodox, but it's what we have to do
+        // to have a multiline JTree
         return "<html>" + 
                stops.get(0).getName() + " to " + stops.get(stops.size() - 1).getName() + "<br>" +
                "Direction " + trips.get(0).getDirectionId() + "<br>" +
-               stops.size() + " stops, " + trips.size() + " trips" +
+               stops.size() + (stops.size() == 1 ? " stop, " : " stops, ") + trips.size() +
+               (trips.size() == 1 ? " trip" : " trips") +
                "</html>";
     }
     

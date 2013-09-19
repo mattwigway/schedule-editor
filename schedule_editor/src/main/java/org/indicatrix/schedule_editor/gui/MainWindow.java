@@ -34,12 +34,16 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 
 import org.indicatrix.schedule_editor.model.DataManager;
 import org.indicatrix.schedule_editor.model.Pattern;
@@ -51,6 +55,7 @@ public class MainWindow {
     private static DataManager dataManager;
     private static JFrame window;
     private static DefaultTreeModel tree;
+    private static JPanel contentArea;
     
     private static MutableTreeNode routesNode;
     
@@ -75,9 +80,8 @@ public class MainWindow {
         
         window.setJMenuBar(menuBar);
         
-        // set up the layout
         JPanel treeArea = new JPanel();
-        JPanel contentArea = new JPanel();
+        contentArea = new JPanel();
         
         JScrollPane treeAreaScr = new JScrollPane(treeArea);
         JScrollPane contentAreaScr = new JScrollPane(contentArea);
@@ -103,7 +107,8 @@ public class MainWindow {
         tree.insertNodeInto(calendarNode, rootNode, 3);
         tree.insertNodeInto(feedInfoNode, rootNode, 4);
         
-        JTree treeView = new JTree(tree);   
+        JTree treeView = new JTree(tree);
+        treeView.addTreeSelectionListener(new HandleTreeSelect());
         treeArea.add(treeView);
         
         window.pack();
@@ -151,6 +156,29 @@ public class MainWindow {
                     }
                 }
             }
+        }
+    }
+    
+    /** Handle a tree selection */
+    private static class HandleTreeSelect implements TreeSelectionListener {
+        public void valueChanged(TreeSelectionEvent e) {
+            // get the relevant node
+            // TODO: multiple selections
+            if (e.getPaths().length == 0) return;
+            
+            TreePath path = e.getPaths()[0];
+            Object obj = ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject();
+            
+            if (obj instanceof Pattern) showPattern((Pattern) obj);
+        }
+        
+        private void showPattern (Pattern pattern) {
+            PatternTableModel ptm = new PatternTableModel(pattern, dataManager.getDao());
+            JTable table = new JTable(ptm);
+            
+            contentArea.removeAll();
+            contentArea.add(table);
+            contentArea.revalidate();
         }
     }
     
