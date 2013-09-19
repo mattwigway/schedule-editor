@@ -20,11 +20,15 @@
 package org.indicatrix.schedule_editor.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.GridLayout;
 
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 
 import lombok.Getter;
 
@@ -40,6 +44,9 @@ public class PatternEditor extends JPanel {
     private Pattern pattern;
     private DataManager dataManager;
     private PatternTableModel tableModel;
+    private AgencyAndIdSelector idSelector;
+    private JTextField blockIdField;
+    private DirectionIdSelector directionIdSelector;
     
     public PatternEditor (Pattern pattern, DataManager dataManager) {
         super(new BorderLayout());
@@ -52,13 +59,35 @@ public class PatternEditor extends JPanel {
         JTable table = new JTable(tableModel);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         
+        JPanel tripArea = new JPanel(new GridLayout(0, 2));
+        
+        // put the gridlayout inside a flowlayout to prevent expansion
+        // http://stackoverflow.com/questions/4699892
+        JPanel tripAreaSuper = new JPanel();
+        tripAreaSuper.add(tripArea);
+        
+        // build the trip information area
+        tripArea.add(new JLabel("Agency and ID"));
+        idSelector = new AgencyAndIdSelector(dataManager);
+        tripArea.add(idSelector);
+        
+        tripArea.add(new JLabel("Block ID"));
+        blockIdField = new JTextField("", 10);
+        tripArea.add(blockIdField);
+        
+        tripArea.add(new JLabel("Direction ID"));
+        directionIdSelector = new DirectionIdSelector();
+        tripArea.add(directionIdSelector);
+        
+        // TODO: Service and shape IDs
+        
         // build the layout
         // create the content frames
         JScrollPane tableArea = new JScrollPane(table);
-        JScrollPane tripArea = new JScrollPane();
+        JScrollPane tripAreaScr = new JScrollPane(tripAreaSuper);
         JScrollPane stopTimeArea = new JScrollPane();
         
-        JSplitPane attrArea = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tripArea, stopTimeArea);
+        JSplitPane attrArea = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tripAreaScr, stopTimeArea);
         JSplitPane vertSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableArea, attrArea);
         
         this.add(vertSplit, BorderLayout.CENTER);
