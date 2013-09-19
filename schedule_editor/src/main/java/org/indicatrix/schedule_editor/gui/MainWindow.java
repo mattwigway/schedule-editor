@@ -19,6 +19,7 @@
 
 package org.indicatrix.schedule_editor.gui;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -81,16 +82,15 @@ public class MainWindow {
         window.setJMenuBar(menuBar);
         
         JPanel treeArea = new JPanel();
-        contentArea = new JPanel();
+        contentArea = new JPanel(new BorderLayout());
         
         JScrollPane treeAreaScr = new JScrollPane(treeArea);
-        JScrollPane contentAreaScr = new JScrollPane(contentArea);
         
         // Set up the left menu/tree and the main content area
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treeAreaScr,
-                contentAreaScr);
+                contentArea);
         
-        window.getContentPane().add(splitPane);
+        window.getContentPane().add(splitPane, BorderLayout.CENTER);
         
         // now that layout is set, add the tree
         MutableTreeNode agencyNode = new DefaultMutableTreeNode("Agency");
@@ -172,12 +172,11 @@ public class MainWindow {
             if (obj instanceof Pattern) showPattern((Pattern) obj);
         }
         
-        private void showPattern (Pattern pattern) {
-            PatternTableModel ptm = new PatternTableModel(pattern, dataManager.getDao());
-            JTable table = new JTable(ptm);
+        private void showPattern (Pattern pattern) {            
+            PatternEditor editor = new PatternEditor(pattern, dataManager);
             
             contentArea.removeAll();
-            contentArea.add(table);
+            contentArea.add(editor, BorderLayout.CENTER);
             contentArea.revalidate();
         }
     }
