@@ -41,7 +41,9 @@ public class PatternTableModel extends AbstractTableModel {
             
             if (row % 2 == 1)
                 return pattern.getTrips().get((row - 1) / 2).getId();
-            else return "";
+            else
+                return "<html><i><small>" + pattern.getTrips().get((row - 2) / 2).getServiceId() +
+                        "</small></i></html>";
         }
         
         // avoid many - 1's later on.
